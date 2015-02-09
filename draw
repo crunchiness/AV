@@ -1,0 +1,5 @@
+    for c = -0.97*radius: radius/20 : 0.97*radius
+      r = sqrt(radius^2-c^2);
+      plot(cc(i)+c,cr(i)+r,'g.')
+      plot(cc(i)+c,cr(i)-r,'g.')
+    end
