@@ -22,6 +22,7 @@ for i = 25:87
     foremm = bwmorph(fore, 'erode', 3);
     foremm = double(bwareaopen(foremm, 10));
     foremm = bwmorph(foremm, 'dilate', 3);
+    
     bg_pixels = ones([480,640], 'double') - double(foremm);
     bg_pixels2(:,:,1) = bg_pixels;
     bg_pixels2(:,:,2) = bg_pixels;
@@ -29,25 +30,27 @@ for i = 25:87
     foremm2(:,:,1) = double(foremm);
     foremm2(:,:,2) = double(foremm);
     foremm2(:,:,3) = double(foremm);
-%   imcontour
-%   bwboundaries
     foremm3(:,:,1) = ones([480,640],'double') - bwperim(foremm);
     foremm3(:,:,2) = foremm3(:,:,1);
     foremm3(:,:,3) = foremm3(:,:,1);
     orig_current = uint8(double(orig_current) .* foremm3);
     Imback = (Imback + 0.1*(current_frame .* bg_pixels2) + 0.1*(Imback .* foremm2)) / 1.1;
-    
-    
-    
-     stuff = bwboundaries(foremm,'noholes');
-    
-    
-    
-    
-    
-    clc
+    [centers_lame, radii_lame] = imfindcircles(foremm, [6 300]);
+    [centers, radii] = find_overlap(centers_lame, radii_lame, 1.9);
     imshow(orig_current);
+    for j = 1:size(centers,1)
+        viscircles(centers(j,:), radii(j), 'LineWidth', 1, 'EdgeColor', 'green', 'DrawBackgroundCircle', false);
+        plot(centers(j,1), centers(j,2), 'gx');
+    end
+%     stuff = bwboundaries(foremm,'noholes');
+%     %clc
+%     imshow(orig_current);
+%     boundaries = bwboundaries(foremm);
+%     for j = 1:length(boundaries)
+%         [radius, center] = get_ball(boundaries{j});
+%         viscircles(center, radius, 'LineWidth', 1, 'EdgeColor', 'green', 'DrawBackgroundCircle', false);
+%         plot(center(1), center(2), 'gx');
+%     end
     hold on
     pause(0.5)
 end
-
