@@ -16,21 +16,23 @@ dt = 1;
 A1 = [[1,0,dt,0]; [0,1,0,0]; [0,0,1,0]; [0,0,0,0]];  % on table, no vertical velocity
 A2 = [[1,0,dt,0]; [0,1,0,dt]; [0,0,1,0]; [0,0,0,1]]; % bounce
 A3 = [[1,0,dt,0]; [0,1,0,dt]; [0,0,1,0]; [0,0,0,1]]; % normal motion
-g = 6.0;              % gravity=pixels^2/time step
+A4 = [[1,0,dt,0]; [0,1,0,dt]; [0,0,1,0]; [0,0,0,1]]; % collision
+g = 3.71;
+% g = 6.0;            % gravity=pixels^2/time step
 Bu1 = [0,0,0,0]';   % on table, no gravity
 Bu2 = [0,0,0,g]';   % bounce
 Bu3 = [0,0,0,g]';   % normal motion
 loss=0.7;
 
 % multiple condensation states
-NCON=100;          % number of condensation samples
-MAXTIME=60;        % number of time frames
-x=zeros(NCON,MAXTIME,4);      % state vectors
-weights=zeros(NCON,MAXTIME);  % est. probability of state
-trackstate=zeros(NCON,MAXTIME);         % state=1,2,3;
-P=zeros(NCON,MAXTIME,4,4);    % est. covariance of state vec.
-for i = 1 : NCON              % initialize estimated covariance
-    for j = 1 : MAXTIME
+N_HYP = 100;          % number of condensation samples
+N_FRAMES = 60;        % number of time frames
+x=zeros(N_HYP,N_FRAMES,4);      % state vectors
+weights=zeros(N_HYP,N_FRAMES);  % est. probability of state
+trackstate=zeros(N_HYP,N_FRAMES);         % state=1,2,3;
+P=zeros(N_HYP,N_FRAMES,4,4);    % est. covariance of state vec.
+for i = 1 : N_HYP              % initialize estimated covariance
+    for j = 1 : N_FRAMES
         P(i,j,1,1) = 100;
         P(i,j,2,2) = 100;
         P(i,j,3,3) = 100;
@@ -47,7 +49,7 @@ fig1=1;
 fig2=0;
 fig15=0;
 fig3=0;
-for i = 1 : MAXTIME
+for i = 1 : N_FRAMES
     
     % load image
     if i < 11
@@ -65,9 +67,9 @@ for i = 1 : MAXTIME
     % extract ball
     [cc(i),cr(i),radius,flag]=extractball(Imwork,bg_frame,fig1,fig2,fig3,fig15,i);
     if flag==0
-        for k = 1 : NCON
+        for k = 1 : N_HYP
             x(k,i,:) = [floor(img_width*rand(1)),floor(img_height*rand(1)),0,0]';
-            weights(k,i)=1/NCON;
+            weights(k,i)=1/N_HYP;
         end
         continue
     end
@@ -91,7 +93,7 @@ for i = 1 : MAXTIME
         SAMPLE=10;
         ident=zeros(100*SAMPLE,1);
         idcount=0;
-        for j = 1 : NCON    % generate sampling distribution
+        for j = 1 : N_HYP    % generate sampling distribution
             num=floor(SAMPLE*100*weights(j,i-1));  % number of samples to generate
             if num > 0
                 ident(idcount+1:idcount+num) = j*ones(1,num);
@@ -101,7 +103,7 @@ for i = 1 : MAXTIME
     end
     
     % generate NCON new state vectors
-    for j = 1 : NCON
+    for j = 1 : N_HYP
         
         % sample randomly from the auxiliary array ident()
         if i==1 % make a random vector

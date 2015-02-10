@@ -1,4 +1,4 @@
-function [ centers, radii ] = detect_balls( frame, bg_frame )
+function [ centers, radii, updated_bg_frame ] = detect_balls( frame, bg_frame )
 %DETECT_BALLS Summary of this function goes here
 %   Detailed explanation goes here
     current_frame = chromy(frame);
@@ -18,8 +18,7 @@ function [ centers, radii ] = detect_balls( frame, bg_frame )
     foremm2(:,:,1) = double(foremm);
     foremm2(:,:,2) = double(foremm);
     foremm2(:,:,3) = double(foremm);
-    bg_frame = (bg_frame + 0.1*(current_frame .* bg_pixels2) + 0.1*(bg_frame .* foremm2)) / 1.1;
+    updated_bg_frame = (bg_frame + 0.1*(current_frame .* bg_pixels2) + 0.1*(bg_frame .* foremm2)) / 1.1;
     [centers_lame, radii_lame] = imfindcircles(foremm, [6 300]);
     [centers, radii] = find_overlap(centers_lame, radii_lame, 1.9);
 end
-
