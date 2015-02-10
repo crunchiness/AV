@@ -1,6 +1,6 @@
-load balls_loc.mat
-
+% load balls_loc.mat
 % N_BALLS = size(new_balls,2);
+
 N_BALLS = 10;
 present = zeros(1, N_BALLS);
 limits  = zeros(1, N_BALLS);
@@ -17,8 +17,7 @@ bg_frame = chromy(imread('set1/00000025.jpg'));
 
 % Kalman filter static initializations
 R = [[0.2845,0.0045]; [0.0045,0.0455]];
-H=[[1,0]',[0,1]',[0,0]',[0,0]'];
-% H = [[1,0]; [0,1]; [0,0]; [0,0]];
+H = [[1,0]',[0,1]',[0,0]',[0,0]'];
 Q = 0.01*eye(4);
 dt = 1;
 A1 = [[1,0,dt,0]; [0,1,0,0]; [0,0,1,0]; [0,0,0,0]];  % on table, no vertical velocity
@@ -35,7 +34,6 @@ Bu5 = [0,0,0,g]';   % normal motion
 loss=0.7;
 
 N_HYP = 1000;                          % number of condensation samples
-x = zeros(N_HYP,N_FRAMES,N_BALLS,4);         % state vectors
 p_stop = 0.05;      % probability of stopping vertical motion
 p_collision = 0.02; % probability of collision
 p_bounce = 0.2;    % probability of bouncing at current state (overestimated)
@@ -45,13 +43,15 @@ TP = cell(N_BALLS,1);
 weights = cell(N_BALLS,1);
 trackstate = cell(N_BALLS,1);
 P = cell(N_BALLS,1);
+x = cell(N_BALLS,1);
 for i = 1:N_BALLS
     xs_current{i} = zeros(4,10);
     TP{i} = zeros(4,4); % predicted covariances
     weights{i} = zeros(N_HYP,N_FRAMES);     % est. probability of state
     trackstate{i} = zeros(N_HYP,N_FRAMES);  % state=1,2,3;
     P{i} = zeros(N_HYP,N_FRAMES,4,4);       % est. covariance of state vec.
-    for j = 1 : N_HYP                    % initialize estimated covariance
+    x{i} = zeros(N_HYP,N_FRAMES,4);         % state vectors
+    for j = 1 : N_HYP                       % initialize estimated covariance
         for k = 1 : N_FRAMES
             P{i}(j,k,1,1) = 100;
             P{i}(j,k,2,2) = 100;
@@ -76,10 +76,10 @@ for i = FIRST_FRAME:FIRST_FRAME + N_FRAMES - 1
                 %TODO something
                 
                 k = probability_box(weights{m}(:,i-1));
-                xs_current{m}(1) = x(k,i-1,m,1);  % get its state vector
-                xs_current{m}(2) = x(k,i-1,m,2);
-                xs_current{m}(3) = x(k,i-1,m,3);
-                xs_current{m}(4) = x(k,i-1,m,4);
+                xs_current{m}(1) = x{m}(k,i-1,1);  % get its state vector
+                xs_current{m}(2) = x{m}(k,i-1,2);
+                xs_current{m}(3) = x{m}(k,i-1,3);
+                xs_current{m}(4) = x{m}(k,i-1,4);
 
                 dist_weights = get_dist_probs(centers_prev, radii_prev, xs_current{m});
                 % sample about this vector from the distribution (assume no covariance)
@@ -147,11 +147,11 @@ for i = FIRST_FRAME:FIRST_FRAME + N_FRAMES - 1
             PP = A*TP{m}*A' + Q;    % predicted error
             % corrections
             K = PP*H'*inv(H*PP*H'+R);      % gain
-            x(k,i,m,:) = (xp + K*([cc(i),cr(i)]' - H*xp))';    % corrected state
+            x{m}(k,i,:) = (xp + K*([cc(i),cr(i)]' - H*xp))';    % corrected state
             P{m}(k,i,:,:) = (eye(4)-K*H)*PP;                    % corrected error
 
             % weight hypothesis by distance from observed data
-            dvec = [cc(i),cr(i)] - [x(k,i,m,1),x(k,i,m,2)];
+            dvec = [cc(i),cr(i)] - [x{m}(k,i,1),x{m}(k,i,2)];
             weights{m}(k,i) = 1/(dvec*dvec');
 
         end
@@ -176,8 +176,8 @@ for i = FIRST_FRAME:FIRST_FRAME + N_FRAMES - 1
             r = sqrt(radius^2-c^2);
             %      plot(x(top,i,1)+c,x(top,i,2)+r+1,'b.')
             %      plot(x(top,i,1)+c,x(top,i,2)+r,'y.')
-            plot(x(top,i,m,1)+c,x(top,i,m,2)+r,'r.')
-            plot(x(top,i,m,1)+c,x(top,i,m,2)-r,'r.')
+            plot(x{m}(top,i,1)+c,x{m}(top,i,2)+r,'r.')
+            plot(x{m}(top,i,1)+c,x{m}(top,i,2)-r,'r.')
             %      plot(x(top,i,1)+c,x(top,i,2)-r,'y.')
             %      plot(x(top,i,1)+c,x(top,i,2)-r-1,'b.')
         end
