@@ -52,22 +52,22 @@ for i = 1:n
 %     end
 end
 
-pic(:,:,1) = uint8((ones(h,w,'double')-(0.5*double(C))).*double(r));
-pic(:,:,2) = uint8((ones(h,w,'double')-(0.5*double(C))).*double(g));
-pic(:,:,3) = uint8((ones(h,w,'double')-(0.5*double(C))).*double(pink));
-
-
-imshow(pic);
-hold on;
-centers = uint32(centers);
-for i = 1:n
-    if colors(i) == 1
-        plot(centers(i,1), centers(i,2), 'yx');
-    elseif colors(i) == 2
-        plot(centers(i,1), centers(i,2), 'rx');
-    elseif colors(i) == 3
-        plot(centers(i,1), centers(i,2), 'wx');
-    end
-end
+% pic(:,:,1) = uint8((ones(h,w,'double')-(0.5*double(C))).*double(r));
+% pic(:,:,2) = uint8((ones(h,w,'double')-(0.5*double(C))).*double(g));
+% pic(:,:,3) = uint8((ones(h,w,'double')-(0.5*double(C))).*double(pink));
+% 
+% 
+% imshow(pic);
+% hold on;
+% centers = uint32(centers);
+% for i = 1:n
+%     if colors(i) == 1
+%         plot(centers(i,1), centers(i,2), 'yx');
+%     elseif colors(i) == 2
+%         plot(centers(i,1), centers(i,2), 'rx');
+%     elseif colors(i) == 3
+%         plot(centers(i,1), centers(i,2), 'wx');
+%     end
+% end
 
 end
