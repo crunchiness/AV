@@ -9,10 +9,12 @@ ball_name = {'white 1', 'white 2', 'pink 1', 'pink 2', 'orange 1', 'orange 2', '
 file_name='./set1/';
 file_format='.jpg';
 previous = [];
+colors = zeros(N_BALLS);
 
 FIRST_FRAME = 25;
 N_FRAMES = 63;
 N_HYP = 100;
+
 
 trackers = cell(N_BALLS,1);
 for i = 1:N_BALLS
@@ -28,13 +30,13 @@ for i = FIRST_FRAME:FIRST_FRAME + N_FRAMES - 1
     filename = [file_name sprintf('%08d', i) file_format];
     orig_current = imread(filename);
     [centers, radii, bg_frame] = detect_balls(orig_current, bg_frame);
-    colors = get_colors(orig_current, centers, radii);
+    detected_colors = get_colors(orig_current, centers, radii);
     if i == 1
         previous = [];
     else
         previous = trajectories(i-1,:,:);
     end
-    matches = match_points(previous, centers, colors);
+    [matches, colors] = match_points(previous, colors, centers, detected_colors);
     for m = 1:N_BALLS
         if matches(m) == 0
             detected_x = NaN;

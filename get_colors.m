@@ -2,7 +2,7 @@ function [ colors ] = get_colors(orig_current, centers, radii)
 %GET_COLORS Summary of this function goes here
 %   Detailed explanation goes here
 
-% colors
+% colors 1=yellow; 2=pink; 3=white;
 yellow = [190, 109, 30];
 pink = [181, 55, 103];
 white = [150, 150, 150];
