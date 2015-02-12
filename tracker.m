@@ -23,6 +23,8 @@ classdef tracker < handle
         p_bounce = 0.2;     % probability of bouncing at current state (overestimated)
         p_invisible = 0.1;
         
+        reset_offset = 0;
+        
         
         N_HYP;
         N_FRAMES;
@@ -53,9 +55,22 @@ classdef tracker < handle
                 end
             end
         end
-        function something = process_frame(self, frame_number, x_coord, y_coord)
+        function coords = process_frame(self, frame_number, x_coord, y_coord, appeared)
             
-            i = frame_number;
+            i = frame_number - self.reset_offset;
+            if isnan(x_coord) && appeared == 0
+                % reset class if not yet appeared
+                self = tracker(self.N_HYP, self.N_FRAMES);
+                self.reset_offset = i;
+%                 self.top_hyps(i) = self.top_hyps(i-1);
+%                 self.weights(:,i) = self.weights(:,i-1);
+%                 self.trackstate(:,i) = self.trackstate(:,i);
+%                 self.x(:,i,:) = self.x(:,i-1,:);
+%                 self.P(:,i,:) = self.P(:,i-1,:);
+                coords = [NaN, NaN];
+                return
+            end
+
             for k = 1 : self.N_HYP
                 if i == 1  % make a random vector
                     x_current = [floor(img_width*rand(1)),floor(img_height*rand(1)),0,0]';
@@ -105,10 +120,6 @@ classdef tracker < handle
 %                             x_current(3) = -loss*x_current(3);
 %                             x_current(4) = -loss*x_current(4);
                             self.trackstate(k,i) = 4;
-                        elseif r < (self.p_bounce + self.p_stop + self.p_collision + self.p_invisible)
-                            A = self.A5;
-                            Bu = self.Bu5;
-                            self.trackstate(k,i) = 5;
                         else  % normal motion
                             A = self.A3;
                             Bu = self.Bu3;
@@ -128,7 +139,23 @@ classdef tracker < handle
                 PP = A*TP*A' + self.Q;  % predicted error
                 % corrections
                 K = PP*self.H'*inv(self.H*PP*self.H'+self.R);  % gain
-                self.x(k,i,:) = (xp + K*([x_coord,y_coord]' - self.H*xp))';  % corrected state
+                if isnan(x_coord)                
+                    x_coord = xp(1) + 1*sqrt(self.P(k,i-1,1,1))*randn(1);
+                    y_coord = xp(2) + 1*sqrt(self.P(k,i-1,2,2))*randn(1);
+                    self.x(k,i,:) = (xp + K*([x_coord,y_coord]' - self.H*xp))';  % corrected state
+                else
+                    self.x(k,i,:) = (xp + K*([x_coord,y_coord]' - self.H*xp))';  % corrected state
+                end
+                if self.x(k,i,1) < 0
+                    self.x(k,i,1) = 0;
+                elseif self.x(k,i,1) > 640
+                    self.x(k,i,1) = 640;
+                end
+                if self.x(k,i,2) < 0
+                    self.x(k,i,2) = 0;
+                elseif self.x(k,i,2) > 480
+                    self.x(k,i,2) = 480;
+                end
                 self.P(k,i,:,:) = (eye(4)-K*self.H)*PP;  % corrected error
 
                 % weight hypothesis by distance from observed data
@@ -142,9 +169,10 @@ classdef tracker < handle
             % select top hypothesis to draw
             subset = self.weights(:,i);
             top = find(subset == max(subset));
+            top = top(1);
             
-            self.top_hyps(i) = top;
-            something = self.x(top,i,:);
+            self.top_hyps(i) = top(1);
+            coords = [self.x(top,i,1), self.x(top,i,2)];
         end
     end
 end

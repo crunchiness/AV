@@ -9,11 +9,11 @@ ball_name = {'white 1', 'white 2', 'pink 1', 'pink 2', 'orange 1', 'orange 2', '
 file_name='./set1/';
 file_format='.jpg';
 previous = [];
-colors = zeros(N_BALLS);
+colors = zeros(N_BALLS,1);
 
 FIRST_FRAME = 25;
 N_FRAMES = 63;
-N_HYP = 100;
+N_HYP = 400;
 
 
 trackers = cell(N_BALLS,1);
@@ -21,6 +21,7 @@ for i = 1:N_BALLS
     trackers{i} = tracker(N_HYP, N_FRAMES);
 end
 trajectories = zeros(N_FRAMES,N_BALLS,2);
+appeared = zeros(N_BALLS,1);
 bg_frame = chromy(imread('set1/00000025.jpg'));
 [img_height, img_width, ~] = size(bg_frame);
 
@@ -31,12 +32,24 @@ for i = FIRST_FRAME:FIRST_FRAME + N_FRAMES - 1
     orig_current = imread(filename);
     [centers, radii, bg_frame] = detect_balls(orig_current, bg_frame);
     detected_colors = get_colors(orig_current, centers, radii);
-    if i == 1
-        previous = [];
+    if i-FIRST_FRAME == 0
+        previous = zeros(N_BALLS,2);
+        for j = 1:N_BALLS
+           previous(j,1) = floor(rand(1) * img_height);
+           previous(j,2) = floor(rand(1) * img_width);
+        end
     else
-        previous = trajectories(i-1,:,:);
+        previous = squeeze(trajectories(i-1,:,:));
     end
-    [matches, colors] = match_points(previous, colors, centers, detected_colors);
+    if i == 29
+        prev_coords_30 = previous;
+        colors_30 = colors;
+        detected_coords_30 = centers;
+        detected_colors_30 = detected_colors;
+    end
+    [matches, colors, radii] = match_points(previous, colors, centers, detected_colors, radii);
+    
+    appeared = appeared + matches;
     for m = 1:N_BALLS
         if matches(m) == 0
             detected_x = NaN;
@@ -45,27 +58,46 @@ for i = FIRST_FRAME:FIRST_FRAME + N_FRAMES - 1
             detected_x = centers(matches(m),1);
             detected_y = centers(matches(m),2);
         end
-        trajectories(m,:) = trackers{m}.process_frame(i, detected_x, detected_y);
+        trajectories(i,m,:) = trackers{m}.process_frame(i-FIRST_FRAME+1, detected_x, detected_y, appeared(m));
     end
-    dist_weights = get_dist_probs(centers_prev, radii_prev, x_current);
     imshow(orig_current);
-    for c = -0.99*radius: radius/10 : 0.99*radius
-        r = sqrt(radius^2-c^2);
-        %      plot(x(top,i,1)+c,x(top,i,2)+r+1,'b.')
-        %      plot(x(top,i,1)+c,x(top,i,2)+r,'y.')
-        plot(x{m}(top,i,1)+c,x{m}(top,i,2)+r,'r.')
-        plot(x{m}(top,i,1)+c,x{m}(top,i,2)-r,'r.')
-        %      plot(x(top,i,1)+c,x(top,i,2)-r,'y.')
-        %      plot(x(top,i,1)+c,x(top,i,2)-r-1,'b.')
-    end
+%     for c = -0.99*radius: radius/10 : 0.99*radius
+%         r = sqrt(radius^2-c^2);
+%         %      plot(x(top,i,1)+c,x(top,i,2)+r+1,'b.')
+%         %      plot(x(top,i,1)+c,x(top,i,2)+r,'y.')
+%         plot(x{m}(top,i,1)+c,x{m}(top,i,2)+r,'r.')
+%         plot(x{m}(top,i,1)+c,x{m}(top,i,2)-r,'r.')
+%         %      plot(x(top,i,1)+c,x(top,i,2)-r,'y.')
+%         %      plot(x(top,i,1)+c,x(top,i,2)-r-1,'b.')
+%     end
         
     for k = 1:N_BALLS
-        viscircles(trajectories(i,k,:), radii(k), 'LineWidth', 1, 'EdgeColor', 'green', 'DrawBackgroundCircle', false);
-        plot(trajectories(i,k,1), trajectories(i,k,2), 'gx');
+        if colors(k) == 1
+            color_name = 'yellow';
+        elseif colors(k) == 2
+            color_name = 'red';
+        elseif colors(k) == 3
+            color_name = 'white';
+        else
+            color_name = 'black';
+        end
+        x = trajectories(i,k,1);
+        y = trajectories(i,k,2);
+        if ~isnan(x)
+            if matches(k) == 0
+                radius = 15;
+            else
+                radius = radii(matches(k));
+            end
+            viscircles([x,y], radius, 'LineWidth', 1, 'EdgeColor', color_name, 'DrawBackgroundCircle', false);
+            hold on
+            plot(x, y, 'gx');
+            text(x, y, num2str(k))
+        end
     end
+    [centers, radii, bg_frame] = detect_balls(orig_current, bg_frame);
+    
+    
     hold on
-    pause(0.1)
-    %TODO update centers rsdfaf
-    centers_prev = centers;
-    radii_prev = radii;
+    pause(1)
 end
