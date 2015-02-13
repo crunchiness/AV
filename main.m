@@ -13,7 +13,7 @@ colors = zeros(N_BALLS,1);
 
 FIRST_FRAME = 25;
 N_FRAMES = 63;
-N_HYP = 400;
+N_HYP = 100;
 
 
 trackers = cell(N_BALLS,1);
@@ -61,15 +61,7 @@ for i = FIRST_FRAME:FIRST_FRAME + N_FRAMES - 1
         trajectories(i,m,:) = trackers{m}.process_frame(i-FIRST_FRAME+1, detected_x, detected_y, appeared(m));
     end
     imshow(orig_current);
-%     for c = -0.99*radius: radius/10 : 0.99*radius
-%         r = sqrt(radius^2-c^2);
-%         %      plot(x(top,i,1)+c,x(top,i,2)+r+1,'b.')
-%         %      plot(x(top,i,1)+c,x(top,i,2)+r,'y.')
-%         plot(x{m}(top,i,1)+c,x{m}(top,i,2)+r,'r.')
-%         plot(x{m}(top,i,1)+c,x{m}(top,i,2)-r,'r.')
-%         %      plot(x(top,i,1)+c,x(top,i,2)-r,'y.')
-%         %      plot(x(top,i,1)+c,x(top,i,2)-r-1,'b.')
-%     end
+
         
     for k = 1:N_BALLS
         if colors(k) == 1
@@ -89,14 +81,17 @@ for i = FIRST_FRAME:FIRST_FRAME + N_FRAMES - 1
             else
                 radius = radii(matches(k));
             end
-            viscircles([x,y], radius, 'LineWidth', 1, 'EdgeColor', color_name, 'DrawBackgroundCircle', false);
-            hold on
+            if radius == 0 || isnan(radius)
+                radius = 15;
+            end
+            x = uint32(real(x));
+            y = uint32(real(y));
+            viscircles([x, y], radius, 'LineWidth', 1, 'EdgeColor', color_name, 'DrawBackgroundCircle', false);
+            hold on;
             plot(x, y, 'gx');
-            text(x, y, num2str(k))
+            text(double(x), double(y), num2str(k))
         end
     end
-    [centers, radii, bg_frame] = detect_balls(orig_current, bg_frame);
-    
     
     hold on
     pause(1)

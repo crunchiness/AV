@@ -56,6 +56,7 @@ function [ matches, colors, radii ] = match_points( prev_coords, colors, detecte
             index = yellow_d(p,3);
             if find(index==matches)
             elseif d < max_d
+                asdf = 'yellow'
                 matches(yellow_p(i,3)) = index;
             end
         end
@@ -68,6 +69,7 @@ function [ matches, colors, radii ] = match_points( prev_coords, colors, detecte
             index = pink_d(p,3);
             if find(index==matches)
             elseif d < max_d
+                asdf = 'pink'
                 matches(pink_p(i,3)) = index;
             end
         end
@@ -80,12 +82,13 @@ function [ matches, colors, radii ] = match_points( prev_coords, colors, detecte
             index = white_d(p,3);
             if find(index==matches)
             elseif d < max_d
+                asdf = white
                 matches(white_p(i,3)) = index;
             end
         end
     end
     unused_d = [];
-    % find unused detecteddetecte
+    % find unused detected
     for i = 1:length(detected_colors)
         if find(i==matches)
         else
@@ -97,11 +100,12 @@ function [ matches, colors, radii ] = match_points( prev_coords, colors, detecte
     
     % assign randomly to uncolored (they don't have coords yet)
     if size(unused_d,1) ~= 0 && size(uncolored,1) ~= 0
-        for j = 1:length(matches)
-            if matches(j) == 0
+        for j = 1:size(uncolored,1)
+            index = uncolored(j,3);
+            if matches(index) == 0
                 for k = 1:size(unused_d,1)
                     if unused_d(k,3) > 0
-                        matches(j) = unused_d(k,3);
+                        matches(index) = unused_d(k,3);
                         unused_d(k,3) = 0;
                         break;
                     end
